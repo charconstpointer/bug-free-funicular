@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net"
+	"net/http"
 	"strings"
 	"time"
 )
@@ -14,40 +14,72 @@ var (
 	port  = flag.Int("port", 7777, "port to listen on")
 )
 
+type State uint32
+
+const (
+	Healthy State = iota
+	Unhealthy
+)
+
+func (s State) String() string {
+	switch s {
+	case Healthy:
+		return "Healthy"
+	case Unhealthy:
+		return "Unhealthy"
+	default:
+		return "Unknown"
+	}
+}
+
 type Node struct {
-	conn net.Conn
+	addr  string
+	state State
 }
 
 func main() {
 	flag.Parse()
 
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
-	if err != nil {
-		log.Fatal("cannot listen on port ", *port)
-	}
-	go func() {
-		log.Println("waiting for connections")
-		for {
-
-			conn, err := listener.Accept()
-			if err != nil {
-				log.Fatalf(err.Error())
-			}
-			log.Println("accepted conn from ", conn.RemoteAddr())
-		}
-	}()
-
 	ns := make([]*Node, 0)
-	flag.Parse()
 	tokens := strings.Split(*nodes, ",")
-	for _, n := range tokens {
-		conn, err := net.Dial("tcp", n)
-		if err != nil {
-			continue
-		}
-		ns = append(ns, &Node{conn})
+	log.Println("initializing known nodes")
+	for _, node := range tokens {
+		log.Printf("adding node %s", node)
+		ns = append(ns, &Node{addr: node, state: Unhealthy})
 	}
 
-	time.Sleep(time.Second * 99)
+	go serve(*port)
+	go watchNodes(ns)
 
+	for {
+		for _, node := range ns {
+			log.Printf("node %s is now %s", node.addr, node.state.String())
+		}
+		time.Sleep(time.Second * 2)
+	}
+}
+func serve(port int) {
+	log.Println("waiting for connections")
+	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(rw, port)
+	})
+	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	if err != nil {
+		log.Fatal("cannot listen on port ", port)
+	}
+}
+
+func watchNodes(nodes []*Node) {
+	for {
+		for _, node := range nodes {
+			_, err := http.Get(node.addr)
+			if err != nil {
+				node.state = Unhealthy
+				continue
+			}
+			node.state = Healthy
+
+		}
+		time.Sleep(time.Second * 2)
+	}
 }
