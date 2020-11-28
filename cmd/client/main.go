@@ -1,14 +1,21 @@
 package main
 
 import (
+	"log"
 	"net"
-	"time"
 )
 
 func main() {
-	_, err := net.Dial("tcp", ":7777")
+	conn, err := net.Dial("tcp", ":7777")
 	if err != nil {
 		panic(err.Error())
 	}
-	time.Sleep(20 * time.Second)
+	buf := make([]byte, 1024)
+	for {
+		n, err := conn.Read(buf)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+		log.Println(n)
+	}
 }

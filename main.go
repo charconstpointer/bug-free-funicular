@@ -61,8 +61,11 @@ func handleClient(c *Client) {
 	for {
 		switch c.state {
 		case Healthy:
-
-			c.conn.Read(buffer)
+			log.Println("yup")
+			_, err := c.conn.Read(buffer)
+			if err != nil {
+				c.state = Unhealthy
+			}
 			if strings.TrimSpace(string(buffer)) != "" {
 				log.Println(string(buffer))
 			}
@@ -78,7 +81,7 @@ func handleClient(c *Client) {
 func checkLiveness(c *Client) {
 	for {
 		log.Printf(">%s", c.state.String())
-		// c.conn.SetWriteDeadline(time.Now().Add(time.Second * 1))
+		c.conn.SetWriteDeadline(time.Now().Add(time.Second * 1))
 		_, err := c.conn.Write([]byte("ping"))
 		if err != nil {
 			c.state = Unhealthy
