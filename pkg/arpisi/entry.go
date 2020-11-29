@@ -10,18 +10,6 @@ import (
 )
 
 //Run is
-func NewArpi(nodes []string) *Arpi {
-	ns := make([]*Node, 0)
-	log.Println("initializing known nodes")
-	for _, node := range nodes {
-		log.Printf("adding node %s", node)
-		ns = append(ns, &Node{addr: node, state: Unhealthy})
-	}
-	arpi := Arpi{nodes: ns}
-	return &arpi
-}
-
-//Run is
 func Run(a *Arpi, port int) {
 	a.listenRPC(port)
 	// a.pingNodes(a.nodes)
@@ -31,7 +19,7 @@ func (a *Arpi) pingNodes(nodes []*Node) {
 		log.Println("pingnodes", len(nodes))
 		for _, node := range nodes {
 			log.Println(node)
-			client, err := rpc.DialHTTP("tcp", node.addr)
+			client, err := rpc.DialHTTP("tcp", node.Addr)
 			if err != nil {
 				log.Println("Connection error: ", err)
 				continue
@@ -57,29 +45,4 @@ func (a *Arpi) listenRPC(port int) {
 		log.Fatal("Error serving: ", err)
 	}
 
-}
-func serve(port int) {
-	log.Println("waiting for connections")
-	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(rw, port)
-	})
-	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
-	if err != nil {
-		log.Fatal("cannot listen on port ", port)
-	}
-}
-
-func watchNodes(nodes []*Node) {
-	for {
-		for _, node := range nodes {
-			_, err := http.Get(node.addr)
-			if err != nil {
-				node.state = Unhealthy
-				continue
-			}
-			node.state = Healthy
-
-		}
-		time.Sleep(time.Second * 2)
-	}
 }

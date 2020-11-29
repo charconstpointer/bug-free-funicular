@@ -32,8 +32,20 @@ type Reply struct {
 
 //Arpi is
 type Arpi struct {
-	nodes []*Node
+	Nodes []*Node
 	Log   []string
+}
+
+//NewArpi is
+func NewArpi(Nodes []string) *Arpi {
+	ns := make([]*Node, 0)
+	log.Println("initializing known nodes")
+	for _, node := range Nodes {
+		log.Printf("adding node %s", node)
+		ns = append(ns, &Node{Addr: node, state: Unhealthy})
+	}
+	arpi := Arpi{Nodes: ns}
+	return &arpi
 }
 
 //Commit is
@@ -46,6 +58,6 @@ func (a *Arpi) Commit(message string, reply *Reply) error {
 
 //Node is
 type Node struct {
-	addr  string
+	Addr  string
 	state State
 }

@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/rpc"
 	"strings"
 	"time"
 
@@ -28,10 +29,16 @@ func do(w http.ResponseWriter, r *http.Request) {
 		var msg Message
 		b, _ := ioutil.ReadAll(r.Body)
 		json.Unmarshal(b, &msg)
-		var reply arpisi.Reply
-		log.Println("commiting", msg.Value)
-		arpi.Commit(msg.Value, &reply)
-		log.Println("reply", reply.Value)
+		for _, node := range arpi.Nodes {
+			var reply arpisi.Reply
+			log.Println("commiting", msg.Value)
+			client, err := rpc.DialHTTP("tcp", *&node.Addr)
+			if err != nil {
+				log.Println(err.Error())
+			}
+			client.Call("Arpi.Commit", msg.Value, &reply)
+			log.Println("reply", reply.Value)
+		}
 	}
 	fmt.Fprintf(w, "%s", strings.Join(arpi.Log, ", "))
 }
