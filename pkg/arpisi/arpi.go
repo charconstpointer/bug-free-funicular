@@ -1,5 +1,10 @@
 package arpisi
 
+import (
+	"log"
+	"strings"
+)
+
 //State is
 type State uint32
 
@@ -28,12 +33,14 @@ type Reply struct {
 //Arpi is
 type Arpi struct {
 	nodes []*Node
-	log   []string
+	Log   []string
 }
 
 //Commit is
 func (a *Arpi) Commit(message string, reply *Reply) error {
-	*reply = Reply{Value: "hello back"}
+	log.Println("received new commit", message)
+	a.Log = append(a.Log, message)
+	*reply = Reply{Value: strings.ToUpper(message)}
 	return nil
 }
 

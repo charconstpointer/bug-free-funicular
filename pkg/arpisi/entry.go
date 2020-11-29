@@ -10,29 +10,25 @@ import (
 )
 
 //Run is
-func Run(nodes []string, port int) {
+func NewArpi(nodes []string) *Arpi {
 	ns := make([]*Node, 0)
 	log.Println("initializing known nodes")
 	for _, node := range nodes {
 		log.Printf("adding node %s", node)
 		ns = append(ns, &Node{addr: node, state: Unhealthy})
 	}
-	arpi := Arpi{}
-	// go serve(*port)
-	go arpi.listenRPC(port)
-	arpi.pingNodes(ns)
-	time.Sleep(time.Second * 100)
-	// go watchNodes(ns)
+	arpi := Arpi{nodes: ns}
+	return &arpi
+}
 
-	// for {
-	// 	for _, node := range ns {
-	// 		log.Printf("node %s is now %s", node.addr, node.state.String())
-	// 	}
-	// 	time.Sleep(time.Second * 2)
-	// }
+//Run is
+func Run(a *Arpi, port int) {
+	a.listenRPC(port)
+	// a.pingNodes(a.nodes)
 }
 func (a *Arpi) pingNodes(nodes []*Node) {
 	for {
+		log.Println("pingnodes", len(nodes))
 		for _, node := range nodes {
 			log.Println(node)
 			client, err := rpc.DialHTTP("tcp", node.addr)
