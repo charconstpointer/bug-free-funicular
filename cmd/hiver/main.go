@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"flag"
+	"fmt"
 	"log"
+	"os"
 	"strings"
-	"time"
 
 	"github.com/charconstpointer/arpisi/pkg/hive"
 )
@@ -16,6 +18,8 @@ var (
 
 func main() {
 	flag.Parse()
+	sc := bufio.NewScanner(os.Stdin)
+
 	tokens := strings.Split(*nodes, ",")
 	nodes := make([]*hive.Node, 0)
 	for _, addr := range tokens {
@@ -24,10 +28,21 @@ func main() {
 	}
 	hive := hive.NewHive(nodes, *port)
 
-	err := hive.Commit("hello")
-	if err != nil {
-		log.Println(err.Error())
+	for {
+		fmt.Printf("%s", ">")
+		sc.Scan()
+		command := sc.Text()
+		cmdTokens := strings.Split(command, " ")
+		if len(cmdTokens) != 2 {
+			log.Println("wrong cmd")
+			continue
+		}
+		switch cmdTokens[0] {
+		case "cmd":
+			err := hive.Commit(cmdTokens[1])
+			if err != nil {
+				log.Println(err.Error())
+			}
+		}
 	}
-
-	time.Sleep(time.Second * 100)
 }
