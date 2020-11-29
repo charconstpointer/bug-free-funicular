@@ -1,12 +1,14 @@
 package hive
 
+import "log"
+
 type RPC struct {
-	cmdCh chan Command
+	rpcCh chan Command
 }
 
-func NewRPC(cmdCh chan Command) *RPC {
+func NewRPC(rpcCh chan Command) *RPC {
 	return &RPC{
-		cmdCh: cmdCh,
+		rpcCh: rpcCh,
 	}
 }
 
@@ -18,7 +20,9 @@ type Command struct {
 }
 
 func (r *RPC) Commit(command Command, reply *Reply) error {
-	r.cmdCh <- command
+	log.Println("cmt")
+	r.rpcCh <- command
+	log.Println("cmt2")
 	*reply = Reply{Value: "reply"}
 	return nil
 }

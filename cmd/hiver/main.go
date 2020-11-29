@@ -26,7 +26,7 @@ func main() {
 		log.Println(addr)
 		nodes = append(nodes, hive.NewNode(addr))
 	}
-	hive := hive.NewHive(nodes, *port)
+	h := hive.NewHive(nodes, *port)
 
 	for {
 		fmt.Printf("%s", ">")
@@ -39,7 +39,9 @@ func main() {
 		}
 		switch cmdTokens[0] {
 		case "cmd":
-			err := hive.Commit(cmdTokens[1])
+
+			cmd := hive.Command{Value: cmdTokens[1]}
+			err := h.Commit(cmd)
 			if err != nil {
 				log.Println(err.Error())
 			}

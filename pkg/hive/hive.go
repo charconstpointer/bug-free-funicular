@@ -2,73 +2,55 @@ package hive
 
 import (
 	"log"
-	"net/rpc"
 	"sync"
 )
 
+//Hive is
 type Hive struct {
 	nodes         []*Node
-	log           []string
+	log           []Command
 	commitCh      chan string
-	rpcCh         chan string
+	rpcCh         chan Command
 	routinesGroup sync.WaitGroup
 	port          int
 	transport     Transport
 }
 
+//NewHive creates new hive duh
 func NewHive(nodes []*Node, port int) *Hive {
+	rpcCh := make(chan Command)
 	hive := &Hive{
-		nodes:     nodes,
-		log:       make([]string, 0),
+		log:       make([]Command, 0),
 		commitCh:  make(chan string),
-		rpcCh:     make(chan string),
+		rpcCh:     rpcCh,
 		port:      port,
-		transport: NewRPCTransport(port),
+		transport: NewRPCTransport(nodes, port, rpcCh),
 	}
 	hive.goFunc(hive.run)
 	return hive
 }
 
-type Node struct {
-	addr string
-}
-
-func NewNode(addr string) *Node {
-	return &Node{addr}
+//Commit save value to the log and propagates to other nodes in a cluster
+func (h *Hive) Commit(command Command) error {
+	h.log = append(h.log, command)
+	h.transport.Commit(command)
+	return nil
 }
 
 func (h *Hive) run() {
 	for {
 		select {
-		case c := <-h.commitCh:
-			for _, node := range h.nodes {
-				client, err := rpc.DialHTTP("tcp", node.addr)
-				if err != nil {
-					log.Println("Connection error: ", err)
-					continue
-				}
-				var reply Reply
-				err = client.Call("RPC.Commit", Command{Value: c}, &reply)
-				if err != nil {
-					log.Println(err.Error())
-				}
-				log.Printf("got response %v", reply)
-			}
 		case r := <-h.rpcCh:
 			h.log = append(h.log, r)
 			log.Println("current log", h.log)
 		}
 	}
 }
+
 func (h *Hive) goFunc(f func()) {
 	h.routinesGroup.Add(1)
 	go func() {
 		defer h.routinesGroup.Done()
 		f()
 	}()
-}
-func (h *Hive) Commit(value string) error {
-	h.log = append(h.log, value)
-	h.commitCh <- value
-	return nil
 }
