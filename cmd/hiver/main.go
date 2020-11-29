@@ -21,11 +21,7 @@ func main() {
 	sc := bufio.NewScanner(os.Stdin)
 
 	tokens := strings.Split(*nodes, ",")
-	nodes := make([]*hive.Node, 0)
-	for _, addr := range tokens {
-		log.Println(addr)
-		nodes = append(nodes, hive.NewNode(addr))
-	}
+	nodes := hive.NodesFrom(tokens)
 	h := hive.NewHive(nodes, *port)
 
 	for {
