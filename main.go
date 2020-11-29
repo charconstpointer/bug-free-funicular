@@ -1,101 +1,62 @@
-// package main
+package arpisi
 
-// import (
-// 	"log"
-// 	"net"
-// 	"strings"
-// 	"time"
-// )
+import (
+	"flag"
+	"fmt"
+	"log"
+	"net/http"
+	"strings"
+	"time"
+)
 
-// type Role uint32
-// type State uint32
+var (
+	nodes = flag.String("nodes", "", "adresses of other nodes in the network")
+	port  = flag.Int("port", 7777, "port to listen on")
+)
 
-// const (
-// 	Master Role = iota
-// 	Slave
-// )
-// const (
-// 	Healthy State = iota
-// 	Unhealthy
-// )
+func main() {
+	flag.Parse()
 
-// func (s State) String() string {
-// 	switch s {
-// 	case Healthy:
-// 		return "Healthy"
+	ns := make([]*Node, 0)
+	tokens := strings.Split(*nodes, ",")
+	log.Println("initializing known nodes")
+	for _, node := range tokens {
+		log.Printf("adding node %s", node)
+		ns = append(ns, &Node{addr: node, state: Unhealthy})
+	}
 
-// 	case Unhealthy:
-// 		return "Unhealthy"
-// 	default:
-// 		return "Unknown"
-// 	}
-// }
+	go serve(*port)
+	go watchNodes(ns)
 
-// type Client struct {
-// 	conn  net.Conn
-// 	state State
-// 	role  Role
-// }
+	for {
+		for _, node := range ns {
+			log.Printf("node %s is now %s", node.addr, node.state.String())
+		}
+		time.Sleep(time.Second * 2)
+	}
+}
+func serve(port int) {
+	log.Println("waiting for connections")
+	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(rw, port)
+	})
+	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	if err != nil {
+		log.Fatal("cannot listen on port ", port)
+	}
+}
 
-// func (c *Client) BecomeMaster() {
-// 	c.conn.Write([]byte("master"))
-// }
+func watchNodes(nodes []*Node) {
+	for {
+		for _, node := range nodes {
+			_, err := http.Get(node.addr)
+			if err != nil {
+				node.state = Unhealthy
+				continue
+			}
+			node.state = Healthy
 
-// type Hub struct {
-// 	clients []*Client
-// }
-
-// func main() {
-// 	l, err := net.Listen("tcp", ":7777")
-// 	hub := Hub{clients: make([]*Client, 0)}
-// 	if err != nil {
-// 		panic(err.Error())
-// 	}
-
-// 	for {
-// 		log.Printf("current clients %d", len(hub.clients))
-// 		conn, err := l.Accept()
-// 		if err != nil {
-// 			log.Fatalf(err.Error())
-// 		}
-// 		c := &Client{conn, Healthy, Slave}
-// 		go handleClient(c)
-// 		hub.clients = append(hub.clients, c)
-
-// 	}
-// }
-
-// func handleClient(c *Client) {
-// 	log.Printf("handle client for %s", c.conn.RemoteAddr().String())
-// 	go checkLiveness(c)
-// 	buffer := make([]byte, 1024)
-// 	for {
-// 		switch c.state {
-// 		case Healthy:
-// 			_, err := c.conn.Read(buffer)
-// 			if err != nil {
-// 				c.state = Unhealthy
-// 			}
-// 			if strings.TrimSpace(string(buffer)) != "" {
-// 				log.Println(string(buffer))
-// 			}
-// 			break
-// 		default:
-// 			log.Println("waiting for client to become healthy again")
-// 			time.Sleep(time.Second * 3)
-// 		}
-
-// 	}
-// }
-
-// func checkLiveness(c *Client) {
-// 	for {
-// 		log.Printf(">%s", c.state.String())
-// 		c.conn.SetWriteDeadline(time.Now().Add(time.Second * 1))
-// 		_, err := c.conn.Write([]byte("ping"))
-// 		if err != nil {
-// 			c.state = Unhealthy
-// 		}
-// 		time.Sleep(time.Second * 1)
-// 	}
-// }
+		}
+		time.Sleep(time.Second * 2)
+	}
+}
