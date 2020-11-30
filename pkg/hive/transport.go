@@ -16,10 +16,8 @@ type Transport interface {
 
 //RPCTransport uses net/rpc package to communicate with other nodes
 type RPCTransport struct {
-	r     *RPC
-	port  int
-	nodes []*Node
-	cmdCh chan Command
+	r    *RPC
+	port int
 }
 
 //Commit is a method required by net/rpc package to handle RPC communication
@@ -41,7 +39,7 @@ func (t *RPCTransport) Commit(node *Node, command Command) Reply {
 }
 
 //NewRPCTransport is
-func NewRPCTransport(nodes []*Node, port int, rpcCh chan Command) *RPCTransport {
+func NewRPCTransport(port int, rpcCh chan Command) *RPCTransport {
 	r := NewRPC(rpcCh)
 	rpc.Register(r)
 	rpc.HandleHTTP()
@@ -57,18 +55,8 @@ func NewRPCTransport(nodes []*Node, port int, rpcCh chan Command) *RPCTransport 
 			log.Fatal("Error serving: ", err)
 		}
 	}()
-	// go func() {
-	// 	for {
-	// 		select {
-	// 		case c := <-cmdCh:
-	// 			log.Println("c", c)
-	// 		}
-	// 	}
-	// }()
 	return &RPCTransport{
 		r:    r,
 		port: port,
-		// cmdCh: cmdCh,
-		nodes: nodes,
 	}
 }

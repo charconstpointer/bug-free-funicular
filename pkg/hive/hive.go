@@ -25,7 +25,7 @@ func NewHive(nodes []*Node, port int) *Hive {
 		commitCh:  make(chan string),
 		rpcCh:     rpcCh,
 		port:      port,
-		transport: NewRPCTransport(nodes, port, rpcCh),
+		transport: NewRPCTransport(port, rpcCh),
 	}
 	hive.goFunc(hive.run)
 	return hive
