@@ -18,12 +18,15 @@ var (
 
 func main() {
 	flag.Parse()
-	sc := bufio.NewScanner(os.Stdin)
 
 	tokens := strings.Split(*nodes, ",")
 	nodes := hive.NodesFrom(tokens)
 	h := hive.NewHive(nodes, *port)
+	listenInput(h)
+}
 
+func listenInput(h *hive.Hive) {
+	sc := bufio.NewScanner(os.Stdin)
 	for {
 		fmt.Printf("%s", ">")
 		sc.Scan()

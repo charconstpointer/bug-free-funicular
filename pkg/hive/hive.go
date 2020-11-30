@@ -20,6 +20,7 @@ type Hive struct {
 func NewHive(nodes []*Node, port int) *Hive {
 	rpcCh := make(chan Command)
 	hive := &Hive{
+		nodes:     nodes,
 		log:       make([]Command, 0),
 		commitCh:  make(chan string),
 		rpcCh:     rpcCh,
@@ -33,7 +34,10 @@ func NewHive(nodes []*Node, port int) *Hive {
 //Commit save value to the log and propagates to other nodes in a cluster
 func (h *Hive) Commit(command Command) error {
 	h.log = append(h.log, command)
-	h.transport.Commit(command)
+	for _, node := range h.nodes {
+		h.transport.Commit(node, command)
+	}
+	// h.transport.Commit(command)
 	return nil
 }
 

@@ -1,7 +1,5 @@
 package hive
 
-import "log"
-
 type RPC struct {
 	rpcCh chan Command
 }
@@ -20,9 +18,7 @@ type Command struct {
 }
 
 func (r *RPC) Commit(command Command, reply *Reply) error {
-	log.Println("cmt")
 	r.rpcCh <- command
-	log.Println("cmt2")
 	*reply = Reply{Value: "reply"}
 	return nil
 }

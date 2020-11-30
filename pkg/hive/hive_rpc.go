@@ -1,12 +1,12 @@
 package hive
 
-type HiveRPC struct {
-}
+// type HiveRPC struct {
+// }
 
-func (h *HiveRPC) Foo(foo string, reply *HiveRPC) error {
-	return nil
-}
+// func (h *HiveRPC) Foo(foo string, reply *HiveRPC) error {
+// 	return nil
+// }
 
-func (h *HiveRPC) Bar(foo string) {
+// func (h *HiveRPC) Bar(foo string) {
 
-}
+// }
