@@ -35,7 +35,7 @@ func NewHive(nodes []*Node, port int) *Hive {
 func (h *Hive) Commit(command Command) error {
 	h.log = append(h.log, command)
 	for _, node := range h.nodes {
-		h.transport.Commit(node, command)
+		h.transport.Call(node, "RPC.Commit", command)
 	}
 	// h.transport.Commit(command)
 	return nil
