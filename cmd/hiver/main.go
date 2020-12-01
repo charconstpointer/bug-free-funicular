@@ -44,6 +44,10 @@ func listenInput(h *hive.Hive) {
 			if err != nil {
 				log.Println(err.Error())
 			}
+		case "list":
+			for i, node := range h.Nodes() {
+				log.Printf("[%d] %v", i, node)
+			}
 		}
 	}
 }

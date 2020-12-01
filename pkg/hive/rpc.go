@@ -19,6 +19,7 @@ type Command struct {
 
 func (r *RPC) Commit(command Command, reply *Reply) error {
 	r.rpcCh <- command
+
 	*reply = Reply{Value: "reply"}
 	return nil
 }

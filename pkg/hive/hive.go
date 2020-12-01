@@ -7,9 +7,9 @@ import (
 
 //Hive is
 type Hive struct {
-	nodes         []*Node
-	log           []Command
-	commitCh      chan string
+	nodes []*Node
+	log   []Command
+
 	rpcCh         chan Command
 	routinesGroup sync.WaitGroup
 	port          int
@@ -20,9 +20,9 @@ type Hive struct {
 func NewHive(nodes []*Node, port int) *Hive {
 	rpcCh := make(chan Command)
 	hive := &Hive{
-		nodes:     nodes,
-		log:       make([]Command, 0),
-		commitCh:  make(chan string),
+		nodes: nodes,
+		log:   make([]Command, 0),
+
 		rpcCh:     rpcCh,
 		port:      port,
 		transport: NewRPCTransport(port, rpcCh),
@@ -39,6 +39,10 @@ func (h *Hive) Commit(command Command) error {
 	}
 	// h.transport.Commit(command)
 	return nil
+}
+
+func (h *Hive) Nodes() []*Node {
+	return h.nodes
 }
 
 func (h *Hive) run() {
